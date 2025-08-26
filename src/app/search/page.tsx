@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { NormalizedPost } from "@/types/wp";
+import { NormalizedPost, WPPost } from "@/types/wp";
 import PostList from "@/components/PostList";
 
 export default function SearchPage() {
@@ -16,18 +16,19 @@ export default function SearchPage() {
 			try {
 				const res = await fetch(`${API_BASE}/wp-json/wp/v2/posts?_embed=1&per_page=100`, { signal: controller.signal });
 				if (!res.ok) return;
-				const json = await res.json();
-				const normalized: NormalizedPost[] = json.map((p: any) => ({
+				const json = (await res.json()) as WPPost[];
+				const normalized: NormalizedPost[] = json.map((p) => ({
 					id: p.id,
 					slug: p.slug,
 					title: p.title.rendered,
 					excerptHtml: p.excerpt.rendered,
 					contentHtml: p.content.rendered,
 					date: p.date,
+					dateDisplay: new Date(p.date).toISOString().slice(0, 10),
 					authorName: p._embedded?.author?.[0]?.name,
 					featuredImageUrl: p._embedded?.["wp:featuredmedia"]?.[0]?.media_details?.sizes?.large?.source_url || p._embedded?.["wp:featuredmedia"]?.[0]?.source_url,
-					categories: (p._embedded?.["wp:term"]?.[0] || []) as any,
-					tags: (p._embedded?.["wp:term"]?.[1] || []) as any,
+					categories: (p._embedded?.["wp:term"]?.[0] || []),
+					tags: (p._embedded?.["wp:term"]?.[1] || []),
 				}));
 				setData(normalized);
 			} catch {}

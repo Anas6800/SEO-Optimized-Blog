@@ -48,8 +48,8 @@ export interface WPPost {
 	};
 }
 
-export interface WPCategory extends WPTerm {}
-export interface WPTag extends WPTerm {}
+export type WPCategory = WPTerm;
+export type WPTag = WPTerm;
 
 export interface NormalizedPost {
 	id: number;

@@ -2,8 +2,8 @@ import { NormalizedPost, WPCategory, WPPost, WPTag } from "@/types/wp";
 
 const API_BASE = process.env.NEXT_PUBLIC_WP_API_BASE?.replace(/\/$/, "") ?? "";
 
+
 if (!API_BASE) {
-	// eslint-disable-next-line no-console
 	console.warn(
 		"NEXT_PUBLIC_WP_API_BASE is not set. Set it to your WordPress site base, e.g., https://example.com"
 	);
@@ -129,7 +129,7 @@ export async function getPostsByCategorySlug(slug: string, page = 1, perPage = 1
 export async function getAllPostSlugs(maxPages = 10, perPage = 100): Promise<string[]> {
 	// Paginate to collect slugs for SSG. Limit to avoid huge builds.
 	if (!API_BASE) return [];
-	let slugs: string[] = [];
+	const slugs: string[] = [];
 	let page = 1;
 	while (page <= maxPages) {
 		const { posts, totalPages } = await getPosts({ page, perPage });

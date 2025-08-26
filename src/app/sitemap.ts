@@ -3,15 +3,17 @@ import { getAllPostSlugs, getCategories, getTags } from "@/lib/wp";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
+	const hasApi = Boolean(process.env.NEXT_PUBLIC_WP_API_BASE);
 	const urls: MetadataRoute.Sitemap = [];
 	if (siteUrl) {
 		urls.push({ url: siteUrl, lastModified: new Date() });
 	}
-	const [slugs, categories, tags] = await Promise.all([
-		getAllPostSlugs(3, 100),
-		getCategories(),
-		getTags(),
-	]);
+
+	// Always safe: get post slugs returns [] when API missing
+	const slugs = await getAllPostSlugs(3, 100);
+	const categories = hasApi ? await getCategories().catch(() => []) : [];
+	const tags = hasApi ? await getTags().catch(() => []) : [];
+
 	for (const slug of slugs) {
 		if (siteUrl) urls.push({ url: `${siteUrl}/blog/${slug}`, lastModified: new Date() });
 	}

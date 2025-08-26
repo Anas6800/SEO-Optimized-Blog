@@ -78,16 +78,14 @@ export async function getPosts(params?: {
 	total: number;
 	totalPages: number;
 }> {
+	if (!API_BASE) {
+		return { posts: [], total: 0, totalPages: 0 };
+	}
 	const query = new URLSearchParams({ _embed: "1" });
 	if (params?.page) query.set("page", String(params.page));
 	if (params?.perPage) query.set("per_page", String(params.perPage));
 	if (params?.category) query.set("categories", String(params.category));
 	const path = `/posts?${query.toString()}`;
-	if (!API_BASE) {
-		throw new Error(
-			"NEXT_PUBLIC_WP_API_BASE is not set. Set it in .env.local to your WordPress site base URL."
-		);
-	}
 	const url = `${API_BASE}/wp-json/wp/v2${path}`;
 	const res = await fetch(url, { headers: { Accept: "application/json" } });
 	if (!res.ok) throw new Error(`WordPress API error ${res.status} for ${path}`);
@@ -112,10 +110,12 @@ export async function getPostBySlug(slug: string): Promise<NormalizedPost | null
 }
 
 export async function getCategories(): Promise<WPCategory[]> {
+	if (!API_BASE) return [];
 	return await wpFetch<WPCategory[]>("/categories?per_page=100");
 }
 
 export async function getTags(): Promise<WPTag[]> {
+	if (!API_BASE) return [];
 	return await wpFetch<WPTag[]>("/tags?per_page=100");
 }
 

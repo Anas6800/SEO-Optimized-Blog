@@ -37,11 +37,11 @@ export default async function BlogPostPage({ params }: Props) {
 		<div className="max-w-3xl mx-auto py-12 px-4 sm:px-6">
 			<article className="prose prose-invert prose-slate max-w-none">
 				<h1>{post.title}</h1>
-				<div className="text-sm text-gray-500">
+				<div className="text-sm text-gray-500 mb-4">
 					{post.dateDisplay} {post.authorName ? `• ${post.authorName}` : null}
 				</div>
 				{post.featuredImageUrl ? (
-					<div className="relative aspect-[16/9] w-full">
+					<div className="relative aspect-[16/9] w-full mb-6">
 						<Image src={post.featuredImageUrl} alt={post.title} fill className="object-cover rounded-md" />
 					</div>
 				) : null}

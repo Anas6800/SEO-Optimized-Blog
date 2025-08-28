@@ -17,13 +17,13 @@ export default function PostCard({ post }: { post: NormalizedPost }) {
 	};
 
 	// Placeholder image component for when featured image is missing
-	const PlaceholderImage = () => (
-		<div className="block relative aspect-[16/9] flex-shrink-0 bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-			<div className="text-center text-slate-400">
-				<div className="text-4xl">📷</div>
-			</div>
-		</div>
-	);
+	// const PlaceholderImage = () => (
+	// 	<div className="block relative aspect-[16/9] flex-shrink-0 bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
+	// 		<div className="text-center text-slate-400">
+	// 			<div className="text-4xl">📷</div>
+	// 		</div>
+	// 	</div>
+	// );
 
 	return (
 		<article className="card-surface overflow-hidden flex flex-col hover:shadow transition h-full">

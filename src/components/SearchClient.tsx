@@ -62,10 +62,10 @@ export default function SearchClient({ initialPosts }: { initialPosts: Normalize
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 							</svg>
 						</div>
-						<input
-							type="search"
-							value={q}
-							onChange={(e) => setQ(e.target.value)}
+				<input
+					type="search"
+					value={q}
+					onChange={(e) => setQ(e.target.value)}
 							placeholder="Search posts by title, content, or excerpt..."
 							className="w-full bg-transparent outline-none pl-10 pr-20 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 border-transparent rounded-lg transition-all duration-200"
 							autoFocus
@@ -138,13 +138,13 @@ export default function SearchClient({ initialPosts }: { initialPosts: Normalize
 							<li>• Check your spelling</li>
 						</ul>
 					</div>
-				</div>
+			</div>
 			)}
 
 			{/* Search results */}
 			{results.length > 0 && (
 				<div className="space-y-6">
-					<PostList posts={results} />
+			<PostList posts={results} />
 					
 					{/* Show all posts hint when no search query */}
 					{!q.trim() && (

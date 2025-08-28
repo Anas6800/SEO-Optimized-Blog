@@ -40,3 +40,18 @@ body {
   @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/15 text-gray-100 hover:bg-white/10 transition;
 }
 
+/* Line clamping utilities for consistent card heights */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+

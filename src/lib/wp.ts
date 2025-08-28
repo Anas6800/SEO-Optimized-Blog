@@ -9,7 +9,7 @@ if (!API_BASE) {
 	);
 }
 
-async function wpFetch<T>(path: string, init?: RequestInit): Promise<T> {
+async function wpFetch<T>(path: string, init?: RequestInit): Promise<{ data: T; headers: Headers }> {
 	if (!API_BASE) {
 		throw new Error(
 			"NEXT_PUBLIC_WP_API_BASE is not set. Set it to your WordPress site base URL (e.g., https://example.com)"
@@ -35,7 +35,13 @@ async function wpFetch<T>(path: string, init?: RequestInit): Promise<T> {
 			`Expected JSON but received '${contentType}'. URL: ${url}. Body starts with: ${text.slice(0, 120)}`
 		);
 	}
-	return (await res.json()) as T;
+	return { data: (await res.json()) as T, headers: res.headers };
+}
+
+// Simple version of wpFetch that only returns data for backward compatibility
+async function wpFetchData<T>(path: string, init?: RequestInit): Promise<T> {
+	const result = await wpFetch<T>(path, init);
+	return result.data;
 }
 
 function pickFeaturedImageUrl(post: WPPost): string | undefined {
@@ -69,12 +75,13 @@ function pickFeaturedImageUrl(post: WPPost): string | undefined {
 			imageUrl = `${process.env.NEXT_PUBLIC_WP_API_BASE?.replace(/\/$/, "")}${imageUrl}`;
 		}
 		
-		// Add cache busting parameter to force fresh image loading
-		// This helps when WordPress replaces images but keeps old URLs
-		// Use post modified date for better cache busting
-		const postModified = new Date(post.modified).getTime();
-		const separator = imageUrl.includes('?') ? '&' : '?';
-		imageUrl = `${imageUrl}${separator}_v=${postModified}`;
+		// Only add cache busting if the image URL doesn't already have query parameters
+		// This prevents conflicts with WordPress's own query parameters
+		if (!imageUrl.includes('?')) {
+			const postModified = new Date(post.modified).getTime();
+			// Use both post ID and modified time for unique cache busting
+			imageUrl = `${imageUrl}?v=${post.id}_${postModified}`;
+		}
 		
 		return imageUrl;
 	} catch (error) {
@@ -87,7 +94,7 @@ function pickFeaturedImageUrl(post: WPPost): string | undefined {
 export async function getFreshImageUrl(postId: number): Promise<string | undefined> {
 	try {
 		// First get the post to find the featured media ID
-		const post = await wpFetch<WPPost>(`/posts/${postId}?_embed=1`);
+		const post = await wpFetchData<WPPost>(`/posts/${postId}?_embed=1`);
 		if (!post?._embedded?.["wp:featuredmedia"]?.[0]) return undefined;
 		
 		const mediaId = post._embedded["wp:featuredmedia"][0].id;
@@ -95,7 +102,7 @@ export async function getFreshImageUrl(postId: number): Promise<string | undefin
 		// Try to fetch the media directly
 		let media;
 		try {
-			media = await wpFetch<WPMedia>(`/media/${mediaId}`);
+			media = await wpFetchData<WPMedia>(`/media/${mediaId}`);
 		} catch (mediaError) {
 			console.warn(`Media ${mediaId} not found, may have been deleted:`, mediaError);
 			return undefined;
@@ -212,12 +219,13 @@ export async function getPosts(params?: {
 	if (params?.perPage) query.set("per_page", String(params.perPage));
 	if (params?.category) query.set("categories", String(params.category));
 	
-	// Use wpFetch for consistency and proper error handling
-	const posts = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
+	// Use wpFetch to get both data and headers
+	const result = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
+	const posts = result.data;
 	
 	// Get pagination info from headers if available
-	const total = posts.length > 0 ? posts.length : 0;
-	const totalPages = params?.page ? Math.ceil(total / (params.perPage || 10)) : 1;
+	const total = parseInt(result.headers.get('X-WP-Total') || posts.length.toString());
+	const totalPages = parseInt(result.headers.get('X-WP-TotalPages') || Math.ceil(total / (params?.perPage || 10)).toString());
 	
 	return { posts: posts.map(normalizePost), total, totalPages };
 }
@@ -226,7 +234,7 @@ export async function getPostBySlug(slug: string): Promise<NormalizedPost | null
 	try {
 		const query = new URLSearchParams({ slug, _embed: "1" });
 		
-		const posts = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
+		const posts = await wpFetchData<WPPost[]>(`/posts?${query.toString()}`);
 		
 		const first = posts[0];
 		if (first) {
@@ -243,16 +251,16 @@ export async function getPostBySlug(slug: string): Promise<NormalizedPost | null
 
 export async function getCategories(): Promise<WPCategory[]> {
 	if (!API_BASE) return [];
-	return await wpFetch<WPCategory[]>("/categories?per_page=100");
+	return await wpFetchData<WPCategory[]>("/categories?per_page=100");
 }
 
 export async function getTags(): Promise<WPTag[]> {
 	if (!API_BASE) return [];
-	return await wpFetch<WPTag[]>("/tags?per_page=100");
+	return await wpFetchData<WPTag[]>("/tags?per_page=100");
 }
 
 export async function getPostsByCategorySlug(slug: string, page = 1, perPage = 10) {
-	const categories = await wpFetch<WPCategory[]>(`/categories?slug=${encodeURIComponent(slug)}`);
+	const categories = await wpFetchData<WPCategory[]>(`/categories?slug=${encodeURIComponent(slug)}`);
 	const cat = categories[0];
 	if (!cat) return { posts: [], total: 0, totalPages: 0 };
 	return await getPosts({ category: cat.id, page, perPage });
@@ -308,8 +316,9 @@ export async function getPostsWithResilientImages(params?: {
 		if (params?.perPage) query.set("per_page", String(params.perPage));
 		if (params?.category) query.set("categories", String(params.category));
 		
-		// Use wpFetch for consistency and proper error handling
-		const posts = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
+		// Use wpFetch to get both data and headers
+		const result = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
+		const posts = result.data;
 		
 		// Process posts with resilient image handling
 		const normalizedPosts = posts.map(post => {

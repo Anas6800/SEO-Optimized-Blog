@@ -20,8 +20,7 @@ export default function PostCard({ post }: { post: NormalizedPost }) {
 	const PlaceholderImage = () => (
 		<div className="block relative aspect-[16/9] flex-shrink-0 bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
 			<div className="text-center text-slate-400">
-				<div className="text-4xl mb-2">📷</div>
-				<div className="text-xs">No Image</div>
+				<div className="text-4xl">📷</div>
 			</div>
 		</div>
 	);

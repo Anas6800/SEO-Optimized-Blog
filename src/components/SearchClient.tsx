@@ -36,34 +36,98 @@ export default function SearchClient({ initialPosts }: { initialPosts: Normalize
 		});
 	}, [q, initialPosts]);
 
-	// Show message if no results found
-	const noResultsMessage = q.trim() && results.length === 0 && (
-		<div className="card-surface p-6 text-center">
-			<p className="text-gray-400">No posts found matching &ldquo;{q}&rdquo;. Try a different search term.</p>
-		</div>
-	);
-
 	return (
 		<div>
-			<div className="card-surface p-3 mb-6">
-				<input
-					type="search"
-					value={q}
-					onChange={(e) => setQ(e.target.value)}
-					placeholder="Search posts..."
-					className="w-full bg-transparent outline-none px-3 py-2"
-				/>
+			{/* Enhanced search input */}
+			<div className="relative mb-8">
+				<div className="card-surface p-4">
+					<div className="relative">
+						<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+							<svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+							</svg>
+						</div>
+						<input
+							type="search"
+							value={q}
+							onChange={(e) => setQ(e.target.value)}
+							placeholder="Search posts by title, content, or excerpt..."
+							className="w-full bg-transparent outline-none pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 border-transparent rounded-lg transition-all duration-200"
+							autoFocus
+						/>
+						{q && (
+							<button
+								onClick={() => setQ('')}
+								className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition-colors"
+								aria-label="Clear search"
+							>
+								<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
+						)}
+					</div>
+				</div>
 			</div>
-			
-			{noResultsMessage}
-			
-			{results.length > 0 && (
-				<div>
-					<p className="text-sm text-gray-400 mb-4">
-						Found {results.length} post{results.length !== 1 ? 's' : ''}
-						{q.trim() && ` matching "${q}"`}
+
+			{/* Search results summary */}
+			{q.trim() && (
+				<div className="mb-6">
+					<div className="flex items-center justify-between">
+						<p className="text-sm text-gray-400">
+							{results.length === 0 
+								? `No results found for "${q.trim()}"`
+								: `Found ${results.length} result${results.length !== 1 ? 's' : ''} for "${q.trim()}"`
+							}
+						</p>
+						{results.length > 0 && (
+							<button
+								onClick={() => setQ('')}
+								className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+							>
+								Clear search
+							</button>
+						)}
+					</div>
+				</div>
+			)}
+
+			{/* No results message */}
+			{q.trim() && results.length === 0 && (
+				<div className="card-surface p-8 text-center">
+					<div className="text-gray-400 mb-4">
+						<svg className="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+						</svg>
+					</div>
+					<h3 className="text-lg font-medium text-white mb-2">No posts found</h3>
+					<p className="text-gray-400 mb-4">
+						No posts match your search for &ldquo;<span className="text-white">{q.trim()}</span>&rdquo;.
 					</p>
+					<div className="text-sm text-gray-500">
+						<p className="mb-2">Try searching for:</p>
+						<ul className="space-y-1">
+							<li>• Different keywords or phrases</li>
+							<li>• More general terms</li>
+							<li>• Check your spelling</li>
+						</ul>
+					</div>
+				</div>
+			)}
+
+			{/* Search results */}
+			{results.length > 0 && (
+				<div className="space-y-6">
 					<PostList posts={results} />
+					
+					{/* Show all posts hint when no search query */}
+					{!q.trim() && (
+						<div className="card-surface p-4 text-center border-dashed">
+							<p className="text-sm text-gray-400">
+								💡 <strong>Tip:</strong> Start typing above to search through all {results.length} posts
+							</p>
+						</div>
+					)}
 				</div>
 			)}
 		</div>

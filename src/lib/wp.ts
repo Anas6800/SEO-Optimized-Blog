@@ -49,6 +49,12 @@ function pickFeaturedImageUrl(post: WPPost): string | undefined {
 		const media = post._embedded?.["wp:featuredmedia"]?.[0];
 		if (!media) return undefined;
 		
+		// Check if media is accessible and valid (handle WordPress API errors)
+		if (media && typeof media === 'object' && 'code' in media && media.code === 'rest_forbidden') {
+			console.warn(`Media access forbidden for post ${post.id}, media:`, media);
+			return undefined;
+		}
+		
 		// Get the most recent image URL (WordPress sometimes caches old URLs)
 		let imageUrl = media?.source_url; // This is usually the most current
 		
@@ -75,13 +81,12 @@ function pickFeaturedImageUrl(post: WPPost): string | undefined {
 			imageUrl = `${process.env.NEXT_PUBLIC_WP_API_BASE?.replace(/\/$/, "")}${imageUrl}`;
 		}
 		
-		// Only add cache busting if the image URL doesn't already have query parameters
-		// This prevents conflicts with WordPress's own query parameters
-		if (!imageUrl.includes('?')) {
-			const postModified = new Date(post.modified).getTime();
-			// Use both post ID and modified time for unique cache busting
-			imageUrl = `${imageUrl}?v=${post.id}_${postModified}`;
-		}
+		// Add cache busting parameter to force fresh image loading
+		// This helps when WordPress replaces images but keeps old URLs
+		// Use post modified date for better cache busting
+		const postModified = new Date(post.modified).getTime();
+		const separator = imageUrl.includes('?') ? '&' : '?';
+		imageUrl = `${imageUrl}${separator}_v=${postModified}`;
 		
 		return imageUrl;
 	} catch (error) {
@@ -94,7 +99,8 @@ function pickFeaturedImageUrl(post: WPPost): string | undefined {
 export async function getFreshImageUrl(postId: number): Promise<string | undefined> {
 	try {
 		// First get the post to find the featured media ID
-		const post = await wpFetchData<WPPost>(`/posts/${postId}?_embed=1`);
+		const postResult = await wpFetch<WPPost>(`/posts/${postId}?_embed=1`);
+		const post = postResult.data;
 		if (!post?._embedded?.["wp:featuredmedia"]?.[0]) return undefined;
 		
 		const mediaId = post._embedded["wp:featuredmedia"][0].id;
@@ -102,9 +108,16 @@ export async function getFreshImageUrl(postId: number): Promise<string | undefin
 		// Try to fetch the media directly
 		let media;
 		try {
-			media = await wpFetchData<WPMedia>(`/media/${mediaId}`);
+			const mediaResult = await wpFetch<WPMedia>(`/media/${mediaId}`);
+			media = mediaResult.data;
 		} catch (mediaError) {
 			console.warn(`Media ${mediaId} not found, may have been deleted:`, mediaError);
+			return undefined;
+		}
+		
+		// Check if media is accessible
+		if (!media || (typeof media === 'object' && 'code' in media && media.code === 'rest_forbidden')) {
+			console.warn(`Media ${mediaId} access forbidden or not found`);
 			return undefined;
 		}
 		
@@ -316,12 +329,12 @@ export async function getPostsWithResilientImages(params?: {
 		if (params?.perPage) query.set("per_page", String(params.perPage));
 		if (params?.category) query.set("categories", String(params.category));
 		
-		// Use wpFetch to get both data and headers
+		// Use wpFetch for consistency and proper error handling
 		const result = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
 		const posts = result.data;
 		
 		// Process posts with resilient image handling
-		const normalizedPosts = posts.map(post => {
+		const normalizedPosts = posts.map((post: WPPost) => {
 			try {
 				return normalizePost(post);
 			} catch (error) {

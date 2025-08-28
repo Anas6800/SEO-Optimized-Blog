@@ -10,13 +10,30 @@ export default async function Home({ searchParams }: { searchParams: { page?: st
   try {
     const { posts, totalPages } = await getPostsWithResilientImages({ page, perPage });
     
-    // Filter out any invalid posts
-    const validPosts = posts.filter(post => 
-      post.title && 
-      post.title !== 'Untitled' && 
-      post.slug && 
-      post.contentHtml
-    );
+    // Filter out any invalid posts using the same logic as search
+    const validPosts = posts.filter(post => {
+      // Must have all required fields
+      if (!post.title || !post.slug || !post.contentHtml) {
+        return false;
+      }
+      
+      // Must not be placeholder/error posts
+      if (post.title === 'Untitled' || post.title === 'Post') {
+        return false;
+      }
+      
+      // Must have meaningful content
+      if (post.contentHtml.length < 10) {
+        return false;
+      }
+      
+      // Must have a valid slug (not empty or just numbers)
+      if (!post.slug || post.slug.length < 3) {
+        return false;
+      }
+      
+      return true;
+    });
     
     return (
       <div>

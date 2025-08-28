@@ -53,7 +53,6 @@ function pickFeaturedImageUrl(post: WPPost): string | undefined {
 	}
 	
 	if (!imageUrl) {
-		console.warn('No image URL found for post:', post.id);
 		return undefined;
 	}
 	
@@ -69,14 +68,17 @@ function pickFeaturedImageUrl(post: WPPost): string | undefined {
 	const separator = imageUrl.includes('?') ? '&' : '?';
 	imageUrl = `${imageUrl}${separator}_v=${postModified}`;
 	
-	console.log('Generated image URL with version-based cache busting:', imageUrl);
-	
 	return imageUrl;
 }
 
 // Function to get a fresh image URL without caching
-export async function getFreshImageUrl(mediaId: number): Promise<string | undefined> {
+export async function getFreshImageUrl(postId: number): Promise<string | undefined> {
 	try {
+		// First get the post to find the featured media ID
+		const post = await wpFetch<WPPost>(`/posts/${postId}?_embed=1`);
+		if (!post?._embedded?.["wp:featuredmedia"]?.[0]) return undefined;
+		
+		const mediaId = post._embedded["wp:featuredmedia"][0].id;
 		const media = await wpFetch<WPMedia>(`/media/${mediaId}`);
 		if (!media?.source_url) return undefined;
 		
@@ -151,24 +153,15 @@ export async function getPosts(params?: {
 export async function getPostBySlug(slug: string): Promise<NormalizedPost | null> {
 	try {
 		const query = new URLSearchParams({ slug, _embed: "1" });
-		console.log('Fetching post with slug:', slug);
-		console.log('API URL:', `${API_BASE}/wp-json/wp/v2/posts?${query.toString()}`);
 		
 		const posts = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
-		console.log('Posts found:', posts.length);
 		
 		const first = posts[0];
 		if (first) {
 			const normalized = normalizePost(first);
-			console.log('Normalized post:', {
-				title: normalized.title,
-				hasImage: !!normalized.featuredImageUrl,
-				imageUrl: normalized.featuredImageUrl
-			});
 			return normalized;
 		}
 		
-		console.log('No post found with slug:', slug);
 		return null;
 	} catch (error) {
 		console.error('Error fetching post by slug:', slug, error);

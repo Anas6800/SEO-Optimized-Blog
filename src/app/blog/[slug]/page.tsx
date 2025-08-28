@@ -51,10 +51,9 @@ export default async function BlogPostPage({ params }: Props) {
 			const freshUrl = await getFreshImageUrl(post.id);
 			if (freshUrl) {
 				imageUrl = freshUrl;
-				console.log('Using fresh image URL:', freshUrl);
 			}
-		} catch (error) {
-			console.log('Using cached image URL:', post.featuredImageUrl);
+		} catch {
+			// Use cached image URL if fresh fetch fails
 		}
 	}
 	
@@ -76,10 +75,6 @@ export default async function BlogPostPage({ params }: Props) {
 								className="object-cover" 
 								priority
 							/>
-						</div>
-						{/* Debug info - remove in production */}
-						<div className="text-xs text-gray-500 mt-2">
-							Image URL: {imageUrl}
 						</div>
 					</div>
 				)}
@@ -105,7 +100,18 @@ export default async function BlogPostPage({ params }: Props) {
 			
 			{post.tags && post.tags.length > 0 && (
 				<div className="mt-8 text-sm text-gray-600">
-					<strong>Tags:</strong> {post.tags.map((t) => t.name).join(", ")}
+					<strong>Tags:</strong>{" "}
+					{post.tags.map((t, index) => (
+						<span key={t.id}>
+							<a 
+								href={`/tag/${t.slug}`}
+								className="text-indigo-400 hover:text-indigo-300 hover:underline"
+							>
+								{t.name}
+							</a>
+							{index < post.tags.length - 1 ? ", " : ""}
+						</span>
+					))}
 				</div>
 			)}
 		</div>

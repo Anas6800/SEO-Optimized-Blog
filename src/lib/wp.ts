@@ -15,15 +15,25 @@ async function wpFetch<T>(path: string, init?: RequestInit): Promise<{ data: T; 
 			"NEXT_PUBLIC_WP_API_BASE is not set. Set it to your WordPress site base URL (e.g., https://example.com)"
 		);
 	}
-	const url = `${API_BASE}/wp-json/wp/v2${path}`;
+	
+	// Add cache busting parameter to prevent stale data
+	const separator = path.includes('?') ? '&' : '?';
+	const timestamp = Date.now();
+	const cacheBustedPath = `${path}${separator}_t=${timestamp}`;
+	
+	const url = `${API_BASE}/wp-json/wp/v2${cacheBustedPath}`;
 	const res = await fetch(url, {
 		...init,
 		headers: {
 			Accept: "application/json",
+			'Cache-Control': 'no-cache, no-store, must-revalidate',
+			'Pragma': 'no-cache',
+			'Expires': '0',
 			...(init?.headers ?? {}),
 		},
-		// Use default caching for WordPress API calls to ensure images load properly
-		// The revalidation will handle content freshness
+		// Disable caching to ensure fresh data
+		cache: 'no-store',
+		next: { revalidate: 0 }
 	});
 	if (!res.ok) {
 		throw new Error(`WordPress API error ${res.status} for ${path}`);

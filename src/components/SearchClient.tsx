@@ -1,17 +1,32 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { NormalizedPost } from "@/types/wp";
 import PostList from "@/components/PostList";
 
 export default function SearchClient({ initialPosts }: { initialPosts: NormalizedPost[] }) {
 	const [q, setQ] = useState("");
+	const [posts] = useState(initialPosts);
+	const [isRefreshing, setIsRefreshing] = useState(false);
+	
+	// Function to refresh posts data
+	const refreshPosts = useCallback(async () => {
+		setIsRefreshing(true);
+		try {
+			// Force a page refresh to get fresh data
+			window.location.reload();
+		} catch (error) {
+			console.error('Error refreshing posts:', error);
+		} finally {
+			setIsRefreshing(false);
+		}
+	}, []);
 	
 	const results = useMemo(() => {
 		const query = q.trim().toLowerCase();
 		if (!query) {
 			// When no query, show all valid posts
-			return initialPosts.filter(post => 
+			return posts.filter(post => 
 				post.title && 
 				post.title !== 'Untitled' && 
 				post.slug && 
@@ -21,7 +36,7 @@ export default function SearchClient({ initialPosts }: { initialPosts: Normalize
 		}
 		
 		// Filter posts based on search query and validity
-		return initialPosts.filter((post) => {
+		return posts.filter((post) => {
 			// First check if post is valid
 			if (!post.title || post.title === 'Untitled' || !post.slug || !post.contentHtml) {
 				return false;
@@ -34,11 +49,11 @@ export default function SearchClient({ initialPosts }: { initialPosts: Normalize
 			
 			return titleMatch || contentMatch || excerptMatch;
 		});
-	}, [q, initialPosts]);
+	}, [q, posts]);
 
 	return (
 		<div>
-			{/* Enhanced search input */}
+			{/* Enhanced search input with refresh button */}
 			<div className="relative mb-8">
 				<div className="card-surface p-4">
 					<div className="relative">
@@ -52,13 +67,24 @@ export default function SearchClient({ initialPosts }: { initialPosts: Normalize
 							value={q}
 							onChange={(e) => setQ(e.target.value)}
 							placeholder="Search posts by title, content, or excerpt..."
-							className="w-full bg-transparent outline-none pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 border-transparent rounded-lg transition-all duration-200"
+							className="w-full bg-transparent outline-none pl-10 pr-20 py-3 text-white placeholder-gray-400 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 border-transparent rounded-lg transition-all duration-200"
 							autoFocus
 						/>
+						{/* Refresh button */}
+						<button
+							onClick={refreshPosts}
+							disabled={isRefreshing}
+							className="absolute inset-y-0 right-0 pr-3 flex items-center text-indigo-400 hover:text-indigo-300 transition-colors disabled:opacity-50"
+							title="Refresh posts data"
+						>
+							<svg className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+							</svg>
+						</button>
 						{q && (
 							<button
 								onClick={() => setQ('')}
-								className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition-colors"
+								className="absolute inset-y-0 right-12 flex items-center text-gray-400 hover:text-gray-200 transition-colors"
 								aria-label="Clear search"
 							>
 								<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

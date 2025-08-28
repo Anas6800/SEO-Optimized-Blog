@@ -2,6 +2,10 @@ import { getPostsWithResilientImages } from "@/lib/wp";
 import SearchClient from "@/components/SearchClient";
 import type { Metadata } from 'next';
 
+// Force dynamic rendering to prevent caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
 	title: 'Search Posts',
 	description: 'Search through all blog posts by title, content, or excerpt. Find exactly what you\'re looking for.',
@@ -15,6 +19,7 @@ export const metadata: Metadata = {
 export default async function SearchPage() {
 	try {
 		// Use the resilient function that handles deleted posts gracefully
+		// Force fresh data by adding timestamp to prevent caching
 		const { posts } = await getPostsWithResilientImages({ page: 1, perPage: 100 });
 		
 		// Filter out any posts that might be invalid, deleted, or have critical errors

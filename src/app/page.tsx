@@ -3,6 +3,10 @@ import PostList from "@/components/PostList";
 import Sidebar from "@/components/Sidebar";
 import Pagination from "@/components/Pagination";
 
+// Force dynamic rendering to prevent caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function Home({ searchParams }: { searchParams: { page?: string } }) {
   const page = Number(searchParams?.page ?? "1");
   const perPage = 9;

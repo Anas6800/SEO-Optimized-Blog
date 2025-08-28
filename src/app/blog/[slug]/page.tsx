@@ -30,22 +30,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
 	const post = await getPostBySlug(params.slug);
-	if (!post) return <div className="max-w-3xl mx-auto py-12">Not found.</div>;
+	
+	if (!post) {
+		return (
+			<div className="max-w-3xl mx-auto py-12 px-4">
+				<h1 className="text-2xl font-bold text-red-500">Post not found</h1>
+				<p>Could not find post with slug: {params.slug}</p>
+			</div>
+		);
+	}
+	
 	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
 	const url = siteUrl ? `${siteUrl}/blog/${post.slug}` : `/${post.slug}`;
-	
-	// Debug logging for image URL
-	if (post.featuredImageUrl) {
-		console.log('Featured image URL:', post.featuredImageUrl);
-		console.log('Post data:', {
-			title: post.title,
-			slug: post.slug,
-			hasImage: !!post.featuredImageUrl,
-			imageUrl: post.featuredImageUrl
-		});
-	} else {
-		console.log('No featured image found for post:', post.slug);
-	}
 	
 	return (
 		<div className="max-w-3xl mx-auto py-12 px-4 sm:px-6">
@@ -54,7 +50,8 @@ export default async function BlogPostPage({ params }: Props) {
 				<div className="text-sm text-gray-500 mb-6">
 					{post.dateDisplay} {post.authorName ? `• ${post.authorName}` : null}
 				</div>
-				{post.featuredImageUrl ? (
+				
+				{post.featuredImageUrl && (
 					<div className="w-full mb-8 overflow-hidden rounded-lg">
 						<div className="relative aspect-[16/9] w-full">
 							<Image 
@@ -63,35 +60,21 @@ export default async function BlogPostPage({ params }: Props) {
 								fill 
 								className="object-cover" 
 								priority
-								onError={(e) => {
-									console.error('Image failed to load:', post.featuredImageUrl);
-								}}
-								onLoad={() => {
-									console.log('Image loaded successfully:', post.featuredImageUrl);
-								}}
 							/>
-						</div>
-						{/* Debug info - remove in production */}
-						<div className="text-xs text-gray-500 mt-2">
-							Debug: {post.featuredImageUrl}
-						</div>
-					</div>
-				) : (
-					<div className="w-full mb-8 p-8 bg-gray-800 rounded-lg text-center text-gray-400">
-						No featured image available
-						<div className="text-xs mt-2">
-							Debug: Check WordPress backend for featured image
 						</div>
 					</div>
 				)}
+				
 				<div 
 					className="prose prose-invert prose-slate max-w-none"
 					dangerouslySetInnerHTML={{ __html: post.contentHtml }} 
 				/>
+				
 				<div className="mt-8">
-					<ShareButtons url={url || `/${params.slug}`} title={post.title} />
+					<ShareButtons url={url} title={post.title} />
 				</div>
 			</article>
+			
 			<SchemaArticle
 				title={post.title}
 				description={post.excerptHtml.replace(/<[^>]+>/g, "").slice(0, 160)}
@@ -100,24 +83,27 @@ export default async function BlogPostPage({ params }: Props) {
 				author={post.authorName}
 				datePublished={post.date}
 			/>
-			{post.tags.length ? (
+			
+			{post.tags && post.tags.length > 0 && (
 				<div className="mt-8 text-sm text-gray-600">
 					<strong>Tags:</strong> {post.tags.map((t) => t.name).join(", ")}
 				</div>
-			) : null}
+			)}
 		</div>
 	);
 }
 
 export async function generateStaticParams() {
-	const slugs = await getAllPostSlugs(5, 50);
-	return slugs.map((slug) => ({ slug }));
+	try {
+		const slugs = await getAllPostSlugs(5, 50);
+		return slugs.map((slug) => ({ slug }));
+	} catch (error) {
+		console.error('Error generating static params:', error);
+		return [];
+	}
 }
 
-// Faster revalidation for development and better content freshness
-export const revalidate = 60; // Revalidate every 1 minute instead of 5 minutes
-
-// Force dynamic rendering for better content updates
+export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
 

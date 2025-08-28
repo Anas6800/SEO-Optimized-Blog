@@ -105,10 +105,31 @@ export async function getPosts(params?: {
 }
 
 export async function getPostBySlug(slug: string): Promise<NormalizedPost | null> {
-	const query = new URLSearchParams({ slug, _embed: "1" });
-	const posts = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
-	const first = posts[0];
-	return first ? normalizePost(first) : null;
+	try {
+		const query = new URLSearchParams({ slug, _embed: "1" });
+		console.log('Fetching post with slug:', slug);
+		console.log('API URL:', `${API_BASE}/wp-json/wp/v2/posts?${query.toString()}`);
+		
+		const posts = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
+		console.log('Posts found:', posts.length);
+		
+		const first = posts[0];
+		if (first) {
+			const normalized = normalizePost(first);
+			console.log('Normalized post:', {
+				title: normalized.title,
+				hasImage: !!normalized.featuredImageUrl,
+				imageUrl: normalized.featuredImageUrl
+			});
+			return normalized;
+		}
+		
+		console.log('No post found with slug:', slug);
+		return null;
+	} catch (error) {
+		console.error('Error fetching post by slug:', slug, error);
+		return null;
+	}
 }
 
 export async function getCategories(): Promise<WPCategory[]> {

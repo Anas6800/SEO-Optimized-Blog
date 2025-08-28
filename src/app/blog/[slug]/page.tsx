@@ -36,16 +36,27 @@ export default async function BlogPostPage({ params }: Props) {
 	return (
 		<div className="max-w-3xl mx-auto py-12 px-4 sm:px-6">
 			<article className="prose prose-invert prose-slate max-w-none">
-				<h1>{post.title}</h1>
-				<div className="text-sm text-gray-500 mb-4">
+				<h1 className="mb-6">{post.title}</h1>
+				<div className="text-sm text-gray-500 mb-6">
 					{post.dateDisplay} {post.authorName ? `• ${post.authorName}` : null}
 				</div>
 				{post.featuredImageUrl ? (
-					<div className="relative aspect-[16/9] w-full mb-6">
-						<Image src={post.featuredImageUrl} alt={post.title} fill className="object-cover rounded-md" />
+					<div className="w-full mb-8 overflow-hidden rounded-lg">
+						<div className="relative aspect-[16/9] w-full">
+							<Image 
+								src={post.featuredImageUrl} 
+								alt={post.title} 
+								fill 
+								className="object-cover" 
+								priority
+							/>
+						</div>
 					</div>
 				) : null}
-				<div dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
+				<div 
+					className="prose prose-invert prose-slate max-w-none"
+					dangerouslySetInnerHTML={{ __html: post.contentHtml }} 
+				/>
 				<div className="mt-8">
 					<ShareButtons url={url || `/${params.slug}`} title={post.title} />
 				</div>
@@ -72,6 +83,10 @@ export async function generateStaticParams() {
 	return slugs.map((slug) => ({ slug }));
 }
 
-export const revalidate = 300; // ISR: revalidate every 5 minutes
+// Faster revalidation for development and better content freshness
+export const revalidate = 60; // Revalidate every 1 minute instead of 5 minutes
+
+// Force dynamic rendering for better content updates
+export const dynamic = 'force-dynamic';
 
 

@@ -22,8 +22,10 @@ async function wpFetch<T>(path: string, init?: RequestInit): Promise<T> {
 			Accept: "application/json",
 			...(init?.headers ?? {}),
 		},
-		// Force dynamic fetch at build: false allows SSG when used in generateStaticParams
-		// cache: 'force-cache' by default in Next.js fetch
+		// Force fresh content by disabling cache
+		cache: 'no-store',
+		// Add cache busting parameter
+		next: { revalidate: 0 }
 	});
 	if (!res.ok) {
 		throw new Error(`WordPress API error ${res.status} for ${path}`);

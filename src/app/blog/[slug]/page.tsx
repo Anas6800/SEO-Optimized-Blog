@@ -33,6 +33,20 @@ export default async function BlogPostPage({ params }: Props) {
 	if (!post) return <div className="max-w-3xl mx-auto py-12">Not found.</div>;
 	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
 	const url = siteUrl ? `${siteUrl}/blog/${post.slug}` : `/${post.slug}`;
+	
+	// Debug logging for image URL
+	if (post.featuredImageUrl) {
+		console.log('Featured image URL:', post.featuredImageUrl);
+		console.log('Post data:', {
+			title: post.title,
+			slug: post.slug,
+			hasImage: !!post.featuredImageUrl,
+			imageUrl: post.featuredImageUrl
+		});
+	} else {
+		console.log('No featured image found for post:', post.slug);
+	}
+	
 	return (
 		<div className="max-w-3xl mx-auto py-12 px-4 sm:px-6">
 			<article className="prose prose-invert prose-slate max-w-none">
@@ -49,10 +63,27 @@ export default async function BlogPostPage({ params }: Props) {
 								fill 
 								className="object-cover" 
 								priority
+								onError={(e) => {
+									console.error('Image failed to load:', post.featuredImageUrl);
+								}}
+								onLoad={() => {
+									console.log('Image loaded successfully:', post.featuredImageUrl);
+								}}
 							/>
 						</div>
+						{/* Debug info - remove in production */}
+						<div className="text-xs text-gray-500 mt-2">
+							Debug: {post.featuredImageUrl}
+						</div>
 					</div>
-				) : null}
+				) : (
+					<div className="w-full mb-8 p-8 bg-gray-800 rounded-lg text-center text-gray-400">
+						No featured image available
+						<div className="text-xs mt-2">
+							Debug: Check WordPress backend for featured image
+						</div>
+					</div>
+				)}
 				<div 
 					className="prose prose-invert prose-slate max-w-none"
 					dangerouslySetInnerHTML={{ __html: post.contentHtml }} 

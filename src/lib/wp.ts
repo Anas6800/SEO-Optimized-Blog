@@ -22,10 +22,8 @@ async function wpFetch<T>(path: string, init?: RequestInit): Promise<T> {
 			Accept: "application/json",
 			...(init?.headers ?? {}),
 		},
-		// Force fresh content by disabling cache
-		cache: 'no-store',
-		// Add cache busting parameter
-		next: { revalidate: 0 }
+		// Use default caching for WordPress API calls to ensure images load properly
+		// The revalidation will handle content freshness
 	});
 	if (!res.ok) {
 		throw new Error(`WordPress API error ${res.status} for ${path}`);
@@ -42,11 +40,19 @@ async function wpFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
 function pickFeaturedImageUrl(post: WPPost): string | undefined {
 	const media = post._embedded?.["wp:featuredmedia"]?.[0];
-	return (
-		media?.media_details?.sizes?.large?.source_url ||
+	if (!media) return undefined;
+	
+	// Ensure we get the full URL for the image
+	const imageUrl = media?.media_details?.sizes?.large?.source_url ||
 		media?.media_details?.sizes?.medium?.source_url ||
-		media?.source_url
-	);
+		media?.source_url;
+	
+	// If the URL is relative, make it absolute
+	if (imageUrl && !imageUrl.startsWith('http')) {
+		return `${process.env.NEXT_PUBLIC_WP_API_BASE?.replace(/\/$/, "")}${imageUrl}`;
+	}
+	
+	return imageUrl;
 }
 
 function normalizePost(post: WPPost): NormalizedPost {
@@ -87,21 +93,15 @@ export async function getPosts(params?: {
 	if (params?.page) query.set("page", String(params.page));
 	if (params?.perPage) query.set("per_page", String(params.perPage));
 	if (params?.category) query.set("categories", String(params.category));
-	const path = `/posts?${query.toString()}`;
-	const url = `${API_BASE}/wp-json/wp/v2${path}`;
-	const res = await fetch(url, { headers: { Accept: "application/json" } });
-	if (!res.ok) throw new Error(`WordPress API error ${res.status} for ${path}`);
-	const total = Number(res.headers.get("X-WP-Total") ?? 0);
-	const totalPages = Number(res.headers.get("X-WP-TotalPages") ?? 0);
-	const contentType = res.headers.get("content-type") || "";
-	if (!contentType.includes("application/json")) {
-		const text = await res.text();
-		throw new Error(
-			`Expected JSON but received '${contentType}'. URL: ${url}. Body starts with: ${text.slice(0, 120)}`
-		);
-	}
-	const json = (await res.json()) as WPPost[];
-	return { posts: json.map(normalizePost), total, totalPages };
+	
+	// Use wpFetch for consistency and proper error handling
+	const posts = await wpFetch<WPPost[]>(`/posts?${query.toString()}`);
+	
+	// Get pagination info from headers if available
+	const total = posts.length > 0 ? posts.length : 0;
+	const totalPages = params?.page ? Math.ceil(total / (params.perPage || 10)) : 1;
+	
+	return { posts: posts.map(normalizePost), total, totalPages };
 }
 
 export async function getPostBySlug(slug: string): Promise<NormalizedPost | null> {

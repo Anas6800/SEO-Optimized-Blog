@@ -16,6 +16,16 @@ export default function PostCard({ post }: { post: NormalizedPost }) {
 		return title.substring(0, maxLength).trim() + '...';
 	};
 
+	// Placeholder image component for when featured image is missing
+	const PlaceholderImage = () => (
+		<div className="block relative aspect-[16/9] flex-shrink-0 bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
+			<div className="text-center text-slate-400">
+				<div className="text-4xl mb-2">📷</div>
+				<div className="text-xs">No Image</div>
+			</div>
+		</div>
+	);
+
 	return (
 		<article className="card-surface overflow-hidden flex flex-col hover:shadow transition h-full">
 			{post.featuredImageUrl ? (
@@ -27,7 +37,11 @@ export default function PostCard({ post }: { post: NormalizedPost }) {
 						className="object-cover" 
 					/>
 				</Link>
-			) : null}
+			) : (
+				<Link href={`/blog/${post.slug}`}>
+					<PlaceholderImage />
+				</Link>
+			)}
 			
 			<div className="p-4 flex flex-col gap-3 flex-1">
 				<h3 className="text-lg font-semibold leading-tight text-white line-clamp-2 min-h-[3rem] flex items-start">

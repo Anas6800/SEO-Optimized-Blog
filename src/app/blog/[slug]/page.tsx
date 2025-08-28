@@ -1,4 +1,4 @@
-import { getAllPostSlugs, getPostBySlug } from "@/lib/wp";
+import { getAllPostSlugs, getPostBySlug, getFreshImageUrl } from "@/lib/wp";
 import ShareButtons from "@/components/ShareButtons";
 import SchemaArticle from "@/components/SchemaArticle";
 import type { Metadata } from "next";
@@ -43,6 +43,21 @@ export default async function BlogPostPage({ params }: Props) {
 	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
 	const url = siteUrl ? `${siteUrl}/blog/${post.slug}` : `/${post.slug}`;
 	
+	// Get fresh image URL if available
+	let imageUrl = post.featuredImageUrl;
+	if (post.featuredImageUrl && post.featuredImageUrl.includes('_v=')) {
+		// Try to get a completely fresh image URL
+		try {
+			const freshUrl = await getFreshImageUrl(post.id);
+			if (freshUrl) {
+				imageUrl = freshUrl;
+				console.log('Using fresh image URL:', freshUrl);
+			}
+		} catch (error) {
+			console.log('Using cached image URL:', post.featuredImageUrl);
+		}
+	}
+	
 	return (
 		<div className="max-w-3xl mx-auto py-12 px-4 sm:px-6">
 			<article className="prose prose-invert prose-slate max-w-none">
@@ -51,16 +66,20 @@ export default async function BlogPostPage({ params }: Props) {
 					{post.dateDisplay} {post.authorName ? `• ${post.authorName}` : null}
 				</div>
 				
-				{post.featuredImageUrl && (
+				{imageUrl && (
 					<div className="w-full mb-8 overflow-hidden rounded-lg">
 						<div className="relative aspect-[16/9] w-full">
 							<Image 
-								src={post.featuredImageUrl} 
+								src={imageUrl} 
 								alt={post.title} 
 								fill 
 								className="object-cover" 
 								priority
 							/>
+						</div>
+						{/* Debug info - remove in production */}
+						<div className="text-xs text-gray-500 mt-2">
+							Image URL: {imageUrl}
 						</div>
 					</div>
 				)}
@@ -79,7 +98,7 @@ export default async function BlogPostPage({ params }: Props) {
 				title={post.title}
 				description={post.excerptHtml.replace(/<[^>]+>/g, "").slice(0, 160)}
 				url={url}
-				image={post.featuredImageUrl}
+				image={imageUrl}
 				author={post.authorName}
 				datePublished={post.date}
 			/>

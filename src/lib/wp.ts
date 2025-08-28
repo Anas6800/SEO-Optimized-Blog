@@ -1,4 +1,4 @@
-import { NormalizedPost, WPCategory, WPPost, WPTag } from "@/types/wp";
+import { NormalizedPost, WPCategory, WPPost, WPTag, WPMedia } from "@/types/wp";
 
 const API_BASE = process.env.NEXT_PUBLIC_WP_API_BASE?.replace(/\/$/, "") ?? "";
 
@@ -42,17 +42,61 @@ function pickFeaturedImageUrl(post: WPPost): string | undefined {
 	const media = post._embedded?.["wp:featuredmedia"]?.[0];
 	if (!media) return undefined;
 	
-	// Ensure we get the full URL for the image
-	const imageUrl = media?.media_details?.sizes?.large?.source_url ||
-		media?.media_details?.sizes?.medium?.source_url ||
-		media?.source_url;
+	// Get the most recent image URL (WordPress sometimes caches old URLs)
+	let imageUrl = media?.source_url; // This is usually the most current
 	
-	// If the URL is relative, make it absolute
-	if (imageUrl && !imageUrl.startsWith('http')) {
-		return `${process.env.NEXT_PUBLIC_WP_API_BASE?.replace(/\/$/, "")}${imageUrl}`;
+	// Fallback to different sizes if source_url is not available
+	if (!imageUrl) {
+		imageUrl = media?.media_details?.sizes?.large?.source_url ||
+			media?.media_details?.sizes?.medium?.source_url ||
+			media?.media_details?.sizes?.thumbnail?.source_url;
 	}
 	
+	if (!imageUrl) {
+		console.warn('No image URL found for post:', post.id);
+		return undefined;
+	}
+	
+	// If the URL is relative, make it absolute
+	if (!imageUrl.startsWith('http')) {
+		imageUrl = `${process.env.NEXT_PUBLIC_WP_API_BASE?.replace(/\/$/, "")}${imageUrl}`;
+	}
+	
+	// Add cache busting parameter to force fresh image loading
+	// This helps when WordPress replaces images but keeps old URLs
+	// Use post modified date for better cache busting
+	const postModified = new Date(post.modified).getTime();
+	const separator = imageUrl.includes('?') ? '&' : '?';
+	imageUrl = `${imageUrl}${separator}_v=${postModified}`;
+	
+	console.log('Generated image URL with version-based cache busting:', imageUrl);
+	
 	return imageUrl;
+}
+
+// Function to get a fresh image URL without caching
+export async function getFreshImageUrl(mediaId: number): Promise<string | undefined> {
+	try {
+		const media = await wpFetch<WPMedia>(`/media/${mediaId}`);
+		if (!media?.source_url) return undefined;
+		
+		let imageUrl = media.source_url;
+		
+		// If the URL is relative, make it absolute
+		if (!imageUrl.startsWith('http')) {
+			imageUrl = `${process.env.NEXT_PUBLIC_WP_API_BASE?.replace(/\/$/, "")}${imageUrl}`;
+		}
+		
+		// Add timestamp for immediate cache busting
+		const separator = imageUrl.includes('?') ? '&' : '?';
+		const timestamp = Date.now();
+		imageUrl = `${imageUrl}${separator}_fresh=${timestamp}`;
+		
+		return imageUrl;
+	} catch (error) {
+		console.error('Error fetching fresh image URL:', error);
+		return undefined;
+	}
 }
 
 function normalizePost(post: WPPost): NormalizedPost {

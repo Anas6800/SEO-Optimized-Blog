@@ -67,12 +67,12 @@ src/
 
 ## 🔗 WordPress API Endpoints
 
-
+```
 GET /wp-json/wp/v2/posts          → All posts
 GET /wp-json/wp/v2/posts?slug=xyz → Single post
 GET /wp-json/wp/v2/categories     → Categories
 GET /wp-json/wp/v2/tags           → Tags
-
+```
 
 
 

@@ -7,7 +7,7 @@ The project is optimized for **SEO, performance, and responsive UI**, using the 
 
 ## 📂 Project Structure
 
-
+```
 src/
 ├── app/
 │   ├── api/revalidate/     # ISR revalidation API route
@@ -39,10 +39,10 @@ src/
 │
 ├── types/
 │   └── wp.ts               # TypeScript types for WP data
-
 ```
 
----
+
+
 
 ## ⚡ Features
 - 🔗 **Headless WordPress CMS** (REST API integration)  
@@ -54,9 +54,9 @@ src/
 - ⚡ **SSG + ISR** for speed and performance  
 - ☁️ **Easy deployment** on Vercel  
 
----
 
-## 🛠️ Tech Stack
+
+ 🛠️ Tech Stack
 - **Frontend:** Next.js (App Router) + TailwindCSS  
 - **Backend:** WordPress (Headless)  
 - **Deployment:** Vercel (frontend) + WordPress host (backend)  

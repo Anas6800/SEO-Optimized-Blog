@@ -9,7 +9,7 @@ The project is optimized for **SEO, performance, and responsive UI**, using the 
 
 
 ## 📂 Project Structure
-
+```
 src/
 ├── app/
 │   ├── api/revalidate/     # ISR revalidation API route
@@ -42,7 +42,7 @@ src/
 ├── types/
 │   └── wp.ts               # TypeScript types for WP data
 
-
+```
 
 
 

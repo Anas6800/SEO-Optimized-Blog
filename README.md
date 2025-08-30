@@ -1,6 +1,3 @@
-Got it 👍 Here’s a **clean, proper `README.md` file** for your project in the same style you shared, but improved and polished for your repo:
-
-
 # 🚀 SEO-Optimized Blog (Next.js + Headless WordPress)
 
 A modern **headless blog** built with **Next.js (App Router)** and **WordPress as a CMS**.  

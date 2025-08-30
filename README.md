@@ -73,9 +73,8 @@ GET /wp-json/wp/v2/posts?slug=xyz → Single post
 GET /wp-json/wp/v2/categories     → Categories
 GET /wp-json/wp/v2/tags           → Tags
 
-````
 
----
+
 
 ## 🖥️ Installation & Setup
 
@@ -83,7 +82,7 @@ GET /wp-json/wp/v2/tags           → Tags
    ```bash
    git clone https://github.com/Anas6800/SEO-Optimized-Blog.git
    cd SEO-Optimized-Blog
-````
+
 
 2. **Install dependencies**
 

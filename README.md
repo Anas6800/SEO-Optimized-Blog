@@ -1,13 +1,12 @@
-```markdown
 # 🚀 SEO-Optimized Blog (Next.js + Headless WordPress)
 
 A modern **headless blog** built with **Next.js (App Router)** and **WordPress as a CMS**.  
 The project is optimized for **SEO, performance, and responsive UI**, using the **WordPress REST API** as the data source.
 
----
+
 
 ## 📂 Project Structure
-```
+
 
 src/
 ├── app/

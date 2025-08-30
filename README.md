@@ -123,8 +123,3 @@ MIT License – Free to use and modify.
 ---
 
 ✨ If you like this project, don’t forget to **star ⭐ the repo**!
-
-```
-
-Would you like me to also make this **SEO-friendly with badges** (e.g. Next.js, WordPress, Tailwind, Vercel badges) for a more professional GitHub look?
-```

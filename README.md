@@ -81,26 +81,30 @@ GET /wp-json/wp/v2/tags           → Tags
    ```bash
    git clone https://github.com/Anas6800/SEO-Optimized-Blog.git
    cd SEO-Optimized-Blog
-
+````
 
 2. **Install dependencies**
-````
+
    ```bash
    npm install
-````
+   ```
+
 3. **Configure environment**
    Create `.env.local` file:
-````
+
    ```env
    NEXT_PUBLIC_WORDPRESS_API_URL=https://my-blog.infinityfree.me/wp-json/wp/v2
    ```
-````
+
 4. **Run locally**
-````
+
    ```bash
    npm run dev
    ```
-````
+
+   Runs at → [http://localhost:3000](http://localhost:3000)
+
+---
    Runs at → [http://localhost:3000](http://localhost:3000)
 
 ## 📦 Deployment

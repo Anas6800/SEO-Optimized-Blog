@@ -87,15 +87,14 @@ GET /wp-json/wp/v2/tags           → Tags
 
    ```bash
    npm install
-   ```
-
+````
 3. **Configure environment**
    Create `.env.local` file:
 
    ```env
    NEXT_PUBLIC_WORDPRESS_API_URL=https://my-blog.infinityfree.me/wp-json/wp/v2
    ```
-
+````
 4. **Run locally**
 
    ```bash
@@ -103,8 +102,7 @@ GET /wp-json/wp/v2/tags           → Tags
    ```
 
    Runs at → [http://localhost:3000](http://localhost:3000)
-
----
+````
 
 ## 📦 Deployment
 

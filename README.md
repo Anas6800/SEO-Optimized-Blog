@@ -73,7 +73,6 @@ GET /wp-json/wp/v2/tags           → Tags
 
 ````
 
----
 
 ## 🖥️ Installation & Setup
 
